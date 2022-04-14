@@ -1852,6 +1852,7 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
         const CTransaction &tx = *(block.vtx[i]);
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
+        bool is_bip30_exception = (is_coinbase && !fEnforceBIP30);
 
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
@@ -1860,8 +1861,10 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
                 COutPoint out(hash, o);
                 Coin coin;
                 bool is_spent = view.SpendCoin(out, &coin);
-                if (fEnforceBIP30 && (!is_spent || tx.vout[o] != coin.out || pindex->nHeight != coin.nHeight || is_coinbase != coin.fCoinBase)) {
-                    fClean = false; // transaction output mismatch
+                if (!is_spent || tx.vout[o] != coin.out || pindex->nHeight != coin.nHeight || is_coinbase != coin.fCoinBase) {
+                    if (!is_bip30_exception) {
+                        fClean = false; // transaction output mismatch
+                    }
                 }
             }
         }
