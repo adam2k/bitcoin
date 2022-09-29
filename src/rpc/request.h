@@ -36,6 +36,7 @@ public:
     std::string authUser;
     std::string peerAddr;
     std::any context;
+    bool allowDangerous;
 
     void parse(const UniValue& valRequest);
 };

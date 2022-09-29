@@ -180,6 +180,18 @@ static bool HTTPReq_JSONRPC(const std::any& context, HTTPRequest* req)
         if (!valRequest.read(req->ReadBody()))
             throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
 
+        // Allows dangerous commands
+        std::pair<bool, std::string> xAllowDangerous = req->GetHeader("x-allow-dangerous");
+
+        if (xAllowDangerous.first) {
+            std::string allowDangerous = xAllowDangerous.second;
+            std::transform(allowDangerous.begin(), allowDangerous.end(), allowDangerous.begin(), ::tolower);
+            std::istringstream is(allowDangerous);
+            is >> std::boolalpha >> jreq.allowDangerous;
+        } else {
+            jreq.allowDangerous = false;
+        }
+
         // Set the URI
         jreq.URI = req->GetURI();
 
